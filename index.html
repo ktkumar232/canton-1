@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Canton Network — Quiz</title>
+  <style>
+    :root{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0}
+    body{background:#f6f8fb;color:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+    .card{width:100%;max-width:900px;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,0.08);padding:28px}
+    h1{margin:0 0 8px;font-size:20px}
+    p.lead{margin:0 0 18px;color:#334155}
+    .question{padding:14px;border-radius:8px;background:#fbfdff;margin-bottom:12px;border:1px solid #e6eef8}
+    .q-title{font-weight:600;margin-bottom:8px}
+    .options{display:grid;gap:8px}
+    label.option{display:flex;gap:10px;align-items:center;padding:8px;border-radius:8px;border:1px solid transparent;cursor:pointer}
+    label.option input{margin:0}
+    label.option:hover{background:#f1f9ff}
+    .controls{display:flex;gap:10px;align-items:center;margin-top:16px}
+    button{background:#0ea5a4;color:white;padding:10px 14px;border:none;border-radius:8px;cursor:pointer}
+    button.secondary{background:#e6eef8;color:#0f172a}
+    .results{margin-top:18px;padding:14px;border-radius:8px;background:#f8fafc;border:1px solid #e6eef8}
+    .score{font-size:18px;font-weight:700}
+    .percent{font-size:14px;margin-top:6px;color:#475569}
+    footer{margin-top:14px;color:#94a3b8;font-size:13px}
+    @media (max-width:560px){.card{padding:18px}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Canton Network — Quiz</h1>
+    <p class="lead">10 questions about the Canton Network Ecosystem. Choose one answer per question, then click <strong>Submit</strong> to see your score and percentage.</p>
+
+    <form id="quizForm">
+      <!-- Questions will be injected here -->
+    </form>
+
+    <div class="controls">
+      <button id="submitBtn" type="button">Submit</button>
+      <button id="restartBtn" type="button" class="secondary">Restart</button>
+      <div id="status" style="margin-left:auto;color:#475569;font-size:14px"></div>
+    </div>
+
+    <div id="result" class="results" style="display:none">
+      <div class="score" id="scoreText"></div>
+      <div class="percent" id="percentText"></div>
+      <div id="feedback" style="margin-top:8px;color:#0f172a"></div>
+      <footer>Project: <strong>Canton Network</strong></footer>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        q: "How much in loans does the Canton Network ecosystem reference on the Ecosystem page?",
+        options: ["$1.5 T","$2.8 T","$3.5 T","$4.2 T"],
+        a: 2
+      },
+      {
+        q: "How many validators does the Canton Network ecosystem mention?",
+        options: ["150+","350+","500+","750+"],
+        a: 1
+      },
+      {
+        q: "What is the name of the interoperability service on the Canton Network mentioned on the page?",
+        options: ["Global Bridge","Universal Synchronizer","Global Synchronizer","Network Connector"],
+        a: 2
+      },
+      {
+        q: "Which stablecoins are mentioned as converging on Canton for high-utility stablecoin use cases?",
+        options: ["DAI and USDT","USDC and USYC","Tether and USDC","USDC and UST"],
+        a: 1
+      },
+      {
+        q: "Which application is described as 'the largest global funds network, connecting the world’s leading financial organizations'?",
+        options: ["7Ridge","Calastone","Broadridge DLR","Equitize"],
+        a: 1
+      },
+      {
+        q: "Which bank is listed as having used Canton to digitally capture syndicated loan data (via 'Versana')?",
+        options: ["Deutsche Bank","Bank of America","HSBC","BNP Paribas"],
+        a: 1
+      },
+      {
+        q: "What is the monthly volume of tokenized UST repo that the DLT Repo app on Canton 'processes'?",
+        options: ["$1 T","$2 T","$3 T","$4 T"],
+        a: 3
+      },
+      {
+        q: "Which of these is a 'tokenized assets' partner mentioned in the ecosystem?",
+        options: ["Blockdaemon","Coinbase","21Shares","FlowDesk"],
+        a: 2
+      },
+      {
+        q: "Which firm is identified as a super validator and also a provider of crypto financial intelligence in the ecosystem?",
+        options: ["Coin Metrics","BitSafe","BitWave","Anchorpoint"],
+        a: 0
+      },
+      {
+        q: "What is the name of the digital asset platform of Goldman Sachs that is natively on Canton?",
+        options: ["GS Chain","GS Token","GS DAP®","GS Ledger"],
+        a: 2
+      }
+    ];
+
+    const form = document.getElementById('quizForm');
+
+    function renderQuiz() {
+      form.innerHTML = '';
+      questions.forEach((item, idx) => {
+        const qDiv = document.createElement('div');
+        qDiv.className = 'question';
+        qDiv.innerHTML = `
+          <div class="q-title">${idx + 1}. ${escapeHtml(item.q)}</div>
+          <div class="options" role="radiogroup" aria-label="Question ${idx + 1}">
+            ${item.options.map((opt, i) => `
+              <label class="option">
+                <input type="radio" name="q${idx}" value="${i}" required />
+                <span>${escapeHtml(opt)}</span>
+              </label>
+            `).join('')}
+          </div>
+        `;
+        form.appendChild(qDiv);
+      });
+    }
+
+    function escapeHtml(str){
+      return str.replace(/[&<>"']/g, function(m){
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
+      });
+    }
+
+    function gradeQuiz(){
+      let score = 0;
+      const total = questions.length;
+      for(let i=0;i<total;i++){
+        const sel = form.querySelector(`input[name=q${i}]:checked`);
+        if(sel){
+          const val = Number(sel.value);
+          if(val === questions[i].a) score++;
+        }
+      }
+      return {score, total};
+    }
+
+    document.getElementById('submitBtn').addEventListener('click', () => {
+      // Check all answered
+      const total = questions.length;
+      const answered = form.querySelectorAll('input[type=radio]:checked').length;
+      if(answered < total){
+        if(!confirm('You have unanswered questions. Submit anyway?')) return;
+      }
+
+      const {score, total: tot} = gradeQuiz();
+      const percent = Math.round((score / tot) * 10000) / 100; // two decimals
+
+      document.getElementById('scoreText').textContent = `Score: ${score} / ${tot}`;
+      document.getElementById('percentText').textContent = `Percentage: ${percent}%`;
+
+      const feedback = document.getElementById('feedback');
+      if(percent === 100) feedback.textContent = 'Perfect! You got every question right.';
+      else if(percent >= 80) feedback.textContent = 'Great job!';
+      else if(percent >= 50) feedback.textContent = 'Not bad — some room for improvement.';
+      else feedback.textContent = 'Keep studying — you can do better!';
+
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('status').textContent = 'Completed';
+
+      // Show correct/incorrect highlights
+      questions.forEach((q, i) => {
+        const opts = form.querySelectorAll(`input[name=q${i}]`);
+        opts.forEach((input, j) => {
+          const label = input.closest('label');
+          label.style.borderColor = 'transparent';
+          if(j === q.a) {
+            label.style.borderColor = '#10b981'; // correct
+            label.style.boxShadow = 'inset 0 0 0 1px rgba(16,185,129,0.12)';
+          }
+          if(input.checked && j !== q.a){
+            label.style.borderColor = '#ef4444'; // wrong
+            label.style.opacity = 0.8;
+          }
+          input.disabled = true;
+        });
+      });
+
+      document.getElementById('submitBtn').disabled = true;
+    });
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      // reset
+      renderQuiz();
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('status').textContent = '';
+      document.getElementById('submitBtn').disabled = false;
+    });
+
+    // initial render
+    renderQuiz();
+  </script>
+</body>
+</html>
